@@ -273,7 +273,8 @@
 
 </div>
 <script>
-  // Desktop (>= 1200px): the 1440px Figma layout, scaled down slightly below 1440.
+  // Desktop (>= 1200px): the 1440px Figma layout, scaled to the full window width
+  // (down below 1440, up on wider screens) so every section fills edge to edge.
   // Tablet / mobile (< 1200px): responsive layout from styles.css; the angled headline
   // artwork keeps its exact Figma composition and is scaled with --s / --hs.
   (function () {
@@ -287,7 +288,7 @@
         root.style.setProperty('--s', (w / 1440).toFixed(4));
         root.style.setProperty('--hs', Math.min(1, (w - 40) / 820).toFixed(4));
       } else {
-        page.style.zoom = w < 1440 ? (w / 1440) : 1;
+        page.style.zoom = w / 1440;
       }
     }
     fit();
