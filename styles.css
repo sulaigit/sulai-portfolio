@@ -638,7 +638,7 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   .hero__watermark-rot p { text-indent: -4.1px; }
 
   /* Last experience row is 160 tall = 40 top padding + 120 text, no bottom padding or rule */
-  .job:last-child { padding-bottom: 0; box-shadow: none; }
+  .job:last-child { padding-bottom: 40px; box-shadow: none; }   /* Freelance: bottom padding = top padding */
 }
 
 /* =====================================================================
@@ -813,3 +813,11 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   }
   .menu__cta > span:first-child { margin-right: -2.6px; }
 }
+
+/* Hero cat icon is a link (mobile hero layer otherwise ignores pointer events) */
+.app-icon { display: block; cursor: pointer; }
+.app-icon--m { pointer-events: auto; }
+
+/* No blue focus ring / tap flash on the menu buttons */
+.nav__burger, .menu__close { outline: none; -webkit-tap-highlight-color: transparent; }
+.nav__burger:focus, .menu__close:focus { outline: none; box-shadow: none; }

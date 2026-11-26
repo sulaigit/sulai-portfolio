@@ -57,11 +57,11 @@
     drop(el, delay, Math.max(260, (r.bottom + 80) / zoom() * 1.15));
   }
 
-  // Contact: start just above the top edge of the red contact section (it clips them)
-  function dropFromSection(el, delay, section) {
+  // Contact: start tucked behind the bottom edge of the testimonial cards and fall out from under them
+  function dropFromSection(el, delay) {
     if (!el) return;
-    var r = el.getBoundingClientRect(), s = section.getBoundingClientRect();
-    drop(el, delay, Math.max(120, (r.bottom - s.top + 24) / zoom() * 1.12));
+    var r = el.getBoundingClientRect(), q = $('.reco__row .quote').getBoundingClientRect();
+    drop(el, delay, Math.max(80, (r.bottom - q.bottom + 8) / zoom()));
   }
 
   function pop(el, delay) {
@@ -161,7 +161,7 @@
     (mob ? $('.contact__watermark-rot') : $('.contact-m__wm')).classList.add('is-in');
     fade(mob ? $('.contact-m__wm') : $('.contact__watermark-rot'), 0, 1600);
     var t = 150;
-    (mob ? contactMob : contactDesk).forEach(function (el, i) { dropFromSection(el, t, contact); t += i < 1 ? 320 : 280; });
+    (mob ? contactMob : contactDesk).forEach(function (el, i) { dropFromSection(el, t); t += i < 1 ? 320 : 280; });
     rise(mob ? contactEmail[1] : contactEmail[0], t + 450, { y: 24, dur: 900 });
   });
 
