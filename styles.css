@@ -57,19 +57,21 @@ img { display: block; max-width: none; }
 .hero {
   position: relative;
   width: 1440px;
-  height: 1000px;
+  height: 802px;           /* Figma 238:39938 */
   flex-shrink: 0;
+  overflow: hidden;
 }
 .hero__bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.hero__bg img { position: absolute; height: 151.2%; left: -22.41%; top: 0; width: 163.8%; }
+/* Figma image fill (pattern0): 163.8% × 168.0% of the frame, shifted -22.41% */
+.hero__bg img { position: absolute; height: 168.0%; left: -22.41%; top: 0; width: 163.8%; }
 
 .nav {
   position: absolute;
   left: 0; top: 0;
   z-index: 2;
   width: 1440px;
-  height: 108px;
-  padding: 30px 60px;
+  height: 74px;            /* rule at y 73 in the new frame */
+  padding: 0 60px;
   border-bottom: 1px solid var(--hair);
   display: flex;
   align-items: center;
@@ -91,9 +93,8 @@ img { display: block; max-width: none; }
   transition: opacity .2s;
 }
 .nav__link:hover { opacity: 1; }
-.nav__link--underline { text-decoration: underline; text-underline-position: from-font; text-decoration-thickness: from-font; }
 .nav__cta {
-  height: 48px;
+  height: 42px;            /* 156 × 41 outline box in Figma */
   padding: 0 20px;
   border: 1px solid rgba(255, 255, 255, 0.29);
   display: flex;
@@ -213,7 +214,7 @@ img { display: block; max-width: none; }
 .scroll {
   position: absolute;
   left: 731px;
-  top: 843px;
+  top: 645px;              /* "SCROLL" cap top at 649.4 */
   width: 62px;
   display: flex;
   flex-direction: column;
@@ -231,9 +232,7 @@ img { display: block; max-width: none; }
   text-align: center;
   opacity: 0.7;
 }
-.scroll__line { width: 100%; height: 54px; display: flex; align-items: center; justify-content: center; }
-.scroll__line > span { position: relative; display: block; flex: none; width: 54px; height: 62px; transform: rotate(90deg); }
-.scroll__line img { position: absolute; top: calc(50% - 1px); left: 0; width: 54px; height: 1px; }
+.scroll__mouse { width: 20.5px; height: 31px; opacity: 0.5; }   /* mouse icon at 751.8, 675 */
 
 /* =============== SECTION HEADINGS (shared) =============== */
 .sec-head { width: 100%; display: flex; align-items: center; justify-content: center; }
@@ -327,9 +326,8 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.25);
 }
 .card__crop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.card__crop img { position: absolute; }
-.card__full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: bottom; pointer-events: none; }
-.card__cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+/* Each image is placed exactly as its Figma fill: offsets and size as % of the image box */
+.card__crop .crop { position: absolute; max-width: none; left: var(--dl); top: var(--dt); width: var(--dw); height: var(--dh); }
 
 .card__body { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 50px; }
 .card__text { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
@@ -367,6 +365,8 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
 /* Stamp lives inside .card__media; % values = Figma px / 556×300 media box (it overhangs the bottom, as in Figma) */
 .stamp {
   position: absolute;
+  left: var(--sl);
+  top: var(--st);
   width: 50.193%;          /* 279.072 / 556 */
   aspect-ratio: 1;
   display: flex;
@@ -553,15 +553,14 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
 .hero__watermark-rot p { text-indent: -14.56px; }
 .contact__watermark-rot p { text-indent: -9.16px; }
 
-.contact__email-m { display: none; }
 
 /* =====================================================================
-   TABLET + MOBILE (< 1200px)
-   No mobile frame exists in Figma, so this layout is derived from the desktop design:
+   TABLET (768–1199px)
+   No tablet frame exists in Figma, so this layout is derived from the desktop design:
    same fonts, colours, spacing rhythm and letter-spacing; the angled headline artwork
    keeps its exact Figma composition and is scaled by --s (hero/contact) and --hs (titles).
    ===================================================================== */
-@media (max-width: 1199px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   .page { width: 100%; }
   .hero, .nav, .works, .experience, .closing, .closing__stage, .contact, .footer { width: 100%; }
 
@@ -642,79 +641,199 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   .footer { position: relative; bottom: auto; height: auto; margin-top: 80px; padding: 30px 40px; }
 }
 
-/* ---------- Mobile (< 768px) ---------- */
-@media (max-width: 767px) {
-  .nav { height: 72px; padding: 16px 20px; }
-  .nav__links { display: none; }          /* Resume stays reachable from the footer */
-  .nav__cta { height: 40px; padding: 0 14px; gap: 14px; font-size: 12px; letter-spacing: 2.4px; }
-  .nav__cta > span:first-child { margin-right: -2.4px; }
-  .nav__logo { width: 131px; height: 20px; }
 
-  .hero { padding: 104px 0 32px; }
-  .scroll { margin-top: 24px; }
+/* Mobile-only pieces are hidden everywhere else */
+.hero-m, .contact-m, .nav__burger { display: none; }
+.menu { display: none; }
 
-  .sec-head__row { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .sec-head__meta { padding-bottom: 0; }
-  .sec-head__meta p { font-size: 12px; letter-spacing: 2.4px; margin-right: -2.4px; }
+/* =====================================================================
+   DESKTOP (>= 1200px) — Figma frame 238:39937 (1440 × 7318)
+   ===================================================================== */
+@media (min-width: 1200px) {
+  /* The new hero headline group is the previous one scaled 0.899 and moved up
+     (checked against BUILDING PRODUCT, I'M SULAI, DESIGN and @ in the export). */
+  .hero__title { transform-origin: 0 0; transform: translate(68.84px, -98.63px) scale(0.899); }
+  .hero__at { top: 438.2px; }
+  .app-icon { left: calc(50% + 356.8px); top: calc(50% + 198.7px); }
+  /* Watermark: 698px, tighter tracking, raised to fit the 802px hero */
+  .hero__watermark { transform: translate(-50%, -100%) translate(0.45px, -88.25px); }
+  .hero__watermark-rot { font-size: 698px; letter-spacing: -4.1px; }
+  .hero__watermark-rot p { text-indent: -4.1px; }
 
-  .works { padding: 72px 20px; gap: 48px; }
-  .works__grid, .works__row { gap: 20px; }
-  .works__row { flex-direction: column; }
-  .card { width: 100%; flex: none; padding: 20px; }
-  .card__inner.gap-40, .card__inner.gap-34 { gap: 24px; }
-  .card__body { gap: 28px; }
-  .card__title { font-size: clamp(32px, 9.6vw, 48px); }
-  .card__desc { font-size: 15px; letter-spacing: 0.6px; }
-  .case-link { font-size: 13px; letter-spacing: 3.9px; }
-  .case-link > span:first-child { margin-right: -3.9px; }
-
-  .experience { padding: 72px 0; gap: 48px; }
-  .experience .sec-head { padding: 0 20px; }
-  .job { flex-direction: column; align-items: flex-start; padding: 24px 20px; gap: 6px; white-space: normal; }
-  .job__left { gap: 16px; align-items: baseline; }
-  .job__year { font-size: 26px; }
-  .job__name { font-size: clamp(30px, 8.6vw, 40px); }
-  .job__right-stack { flex-direction: column-reverse; align-items: flex-start; gap: 6px; }
-  .job__role, .job__current { text-align: left; font-size: 12px; letter-spacing: 2.4px; margin-right: 0; }
-  .job--current .job__current { font-size: 13px; }
-
-  .closing { padding-top: 72px; }
-  .reco { gap: 40px; }
-  .reco .sec-head__row { padding: 0 20px; }
-  .reco__row { padding: 0 20px 8px; gap: 16px; scroll-padding: 0 20px; }
-  .quote { width: 86vw !important; padding: 28px 24px; gap: 36px; }
-  .quote__top { gap: 20px; }
-  .quote__mark { width: 28px; height: 23px; }
-  .quote__text { font-size: 20px; line-height: 1.7; letter-spacing: 0.8px; }
-  .quote__name, .quote__role { font-size: 12px; letter-spacing: 2.4px; }
-  .quote__line { width: 32px; }
-  .quote__line img { width: 32px; }
-  .quote__role { padding-left: 52px; }
-
-  .contact { margin-top: -80px; padding-top: 140px; }
-  .contact__email { display: none; }
-  .contact__email-m { display: flex; justify-content: center; margin-top: 28px; }
-  .contact__email-m a {
-    transform: rotate(3deg);
-    font-family: var(--anton);
-    font-size: 22px;
-    line-height: 1;
-    text-transform: capitalize;
-    text-decoration: underline;
-    text-underline-position: from-font;
-  }
-  .footer {
-    margin-top: 64px;
-    padding: 24px 20px 28px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px 16px;
-    border-top-width: 1px;
-  }
-  .footer__link > span:first-child { font-size: 12px; letter-spacing: 2.4px; margin-right: -2.4px; }
+  /* Last experience row is 160 tall = 40 top padding + 120 text, no bottom padding or rule */
+  .job:last-child { padding-bottom: 0; box-shadow: none; }
 }
 
-/* Figma (frame 238:39937): last experience row is 160 tall = 40 top padding + 120 text, no bottom padding or rule */
-@media (min-width: 1200px) {
-  .job:last-child { padding-bottom: 0; box-shadow: none; }
+/* =====================================================================
+   MOBILE (< 768px) — Figma frames 251:40292 (402 × 6490) and 256:41071 (menu)
+   Built at the frame's 402px width and scaled to the screen by the script in index.html.
+   .gc = text placed by the centre of its glyphs, so it lands where Figma draws it.
+   ===================================================================== */
+@media (max-width: 767px) {
+  .page { width: 402px; margin: 0; }
+  .hero, .nav, .works, .experience, .closing, .closing__stage, .contact, .footer, .reco { width: 402px; }
+
+  .gc {
+    position: absolute;
+    margin: 0;
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+    font-family: var(--anton);
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ---------- Nav ---------- */
+  .nav { height: 68px; padding: 0 20px; }
+  .nav__logo { width: 143.66px; height: 21.96px; }
+  .nav__links, .nav__cta { display: none; }
+  .nav__burger { display: block; width: 36px; height: 36px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .nav__burger svg { display: block; }
+
+  /* ---------- Hero (0–650) ---------- */
+  .hero { height: 650px; }
+  .hero__bg img { width: 163.8%; height: 162.83%; left: -22.41%; top: 0; }
+  .hero__stage { display: none; }
+  .hero-m { display: block; position: absolute; inset: 0; pointer-events: none; }
+  .hero-m__wm { left: 197.9px; top: 294.9px; --r: -4deg; font-size: 196px; letter-spacing: -1.15px; text-indent: -1.15px; color: rgba(255, 255, 255, 0.1); opacity: 0.8; }
+  .hero-m__im { left: 201.1px; top: 166.6px; --r: -3deg; font-size: 60px; }
+  .hero-m__building { left: 204.7px; top: 267.6px; font-size: 86px; line-height: 0.9; }
+  .hero-m__design { left: 199.25px; top: 385px; --r: 3deg; font-size: 92px; color: var(--red); }
+  .hero-m__at { left: 178.35px; top: 464.9px; font-size: 20px; }
+  .app-icon--m { left: 196.4px; top: 444.5px; transform: scale(0.6183); transform-origin: 0 0; }
+  .scroll { left: 170.1px; top: 545.5px; }
+  .scroll__label { font-size: 10px; letter-spacing: 2px; text-indent: 2px; }
+  .scroll__mouse { width: 17.84px; height: 27px; }
+
+  /* ---------- Section headings: absolute, by glyph centre ---------- */
+  .sec-head__row, .sec-head__title { display: contents; }
+  .sec-head__title .star { width: 24px; height: 24px; }
+  .sec-head__meta { position: absolute; left: 20px; top: 80.4px; padding: 0; }
+  .sec-head__meta p { font-size: 12px; letter-spacing: 2.4px; margin-right: -2.4px; }
+  .sec-head__red, .sec-head__white { position: absolute; transform: translate(-50%, -50%); width: auto; height: auto; }
+  .sec-head__red p, .sec-head__white { font-size: 64px; line-height: 1; }
+
+  /* ---------- Featured works (650–3754) ---------- */
+  .works { position: relative; padding: 302px 20px 80px; gap: 0; display: block; }   /* 650 → 3754 */
+  .works .sec-head { position: absolute; left: 0; top: 0; width: 402px; height: 302px; display: block; }
+  .sec-head__title--works .sec-head__red { left: 131.35px; top: 150.8px; }
+  .sec-head__title--works .sec-head__white { left: 187.25px; top: 206.4px; }
+  .sec-head__title--works .star { left: 290px; top: 209px; }
+
+  .works__grid, .works__row { flex-direction: column; gap: 32px; }
+  .card { flex: none; width: 362px; padding: 16px 16px 20px; }
+  .card__inner.gap-40, .card__inner.gap-34 { gap: 24px; }
+  .card__media { width: 328px; height: 190px; box-shadow: none; }
+  .card__crop .crop { left: var(--ml); top: var(--mt); width: var(--mw); height: var(--mh); }
+  .stamp { left: var(--ml); top: var(--mt); width: 47.26%; }
+  .card__body { gap: 32px; }
+  .card__text { gap: 20px; }
+  .card__title { font-size: 40px; }
+  .card__desc { width: 328px; font-size: 14px; line-height: 21px; letter-spacing: 0.56px; }
+  .card--1 .card__desc { width: 252px; }
+  .case-link { font-size: 10px; line-height: 15px; letter-spacing: 3px; gap: 16px; }
+  .case-link > span:first-child { margin-right: -3px; }
+  .card--4 .case-link { font-size: 12px; line-height: 18px; letter-spacing: 3.6px; gap: 12px; }
+  .card--4 .case-link > span:first-child { margin-right: -3.6px; }
+
+  /* ---------- Experience (3754–5357) ---------- */
+  .experience { position: relative; padding: 302px 0 50px; gap: 0; display: block; }
+  .experience .sec-head { position: absolute; left: 0; top: 0; width: 402px; height: 302px; display: block; }
+  .sec-head__title--exp .sec-head__red { left: 87.9px; top: 152.7px; }
+  .sec-head__title--exp .sec-head__white { left: 181.55px; top: 206.4px; }
+  .sec-head__title--exp .star { left: 335px; top: 209px; }
+
+  .job { flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: 38.9px 30px 32.5px; }   /* rows 208 */
+  .job--current { padding-bottom: 33.16px; }   /* 211: CURRENT line is 14px, 2.24 taller than the role */
+  .job:last-child { box-shadow: none; }
+  .job__left { flex-direction: column; align-items: flex-start; gap: 27px; }
+  .job__year { font-size: 32px; line-height: 1; letter-spacing: 1.28px; margin-right: -1.28px; }
+  .job__name { font-size: 40px; line-height: 1; letter-spacing: 1.6px; margin-right: -1.6px; }
+  .job > .job__role, .job__right-stack { margin-top: 25.6px; }
+  .job__right-stack { flex-direction: row; align-items: flex-start; gap: 18px; }
+  .job__role { font-size: 12px; line-height: 1; letter-spacing: 2.4px; margin-right: -2.4px; text-align: left; }
+  .job__role.o-50 { opacity: 0.8; }
+  .job__role.pre { white-space: normal; }       /* mobile frame: "SENIOR DESIGNER - UI/UX" */
+  .job__current { font-size: 14px; line-height: 1; letter-spacing: 2.8px; margin-right: -2.8px; margin-top: 0.24px; }
+
+  /* ---------- Recommendation (5357–6017) + contact (5818–6490) ---------- */
+  .closing { padding-top: 0; }
+  .closing__stage { height: auto; display: flex; flex-direction: column; }
+  .reco { position: relative; z-index: 1; top: auto; left: auto; display: block; padding-top: 270px; gap: 0; }
+  .reco > .sec-head__row { display: block; position: absolute; left: 0; top: 0; width: 402px; height: 270px; }
+  .reco__spacer { display: none; }
+  .sec-head__title--reco .sec-head__red { left: 170.05px; top: 116.7px; }
+  .sec-head__title--reco .sec-head__white { left: 271.75px; top: 164.4px; }
+  .sec-head__title--reco .star { left: 354px; top: 167px; }
+
+  .reco__row {
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 16px;
+    scrollbar-width: none;
+  }
+  .reco__row::-webkit-scrollbar { display: none; }
+  .quote { width: 336px !important; height: 390px; padding: 20px; gap: 0; scroll-snap-align: start; }
+  .quote--2 { order: -1; }                 /* Figma shows Mathuram's quote first */
+  .quote__top { gap: 19.74px; }
+  .quote__mark { width: 24px; height: 20px; }
+  .quote__text { font-size: 20px; line-height: 36px; letter-spacing: 0.8px; text-transform: uppercase; }
+  .quote__by { flex-direction: column; align-items: flex-start; gap: 0; margin-top: 30.26px; }
+  .quote__name { margin-top: 23.7px; line-height: 1; font-size: 12px; letter-spacing: 2.4px; margin-right: -2.4px; }
+  .quote__role { margin-top: 13.8px; line-height: 1; font-size: 12px; letter-spacing: 2.4px; flex: none; text-align: left; text-indent: 0; padding: 0; }
+  .quote__role .dash { display: none; }
+
+  .contact { position: relative; top: auto; order: 2; height: 672px; margin-top: -199px; overflow: hidden; }
+  .contact__bg img { left: -38.49%; top: -41.71%; width: 204.16%; height: 155.3%; transform: rotate(180deg); }
+  .contact__group { display: none; }
+  .contact-m { display: block; position: absolute; inset: 0; }
+  .contact-m__wm { left: 200.7px; top: 381.1px; --r: -4deg; font-size: 178px; letter-spacing: -3.56px; text-indent: -3.56px; color: rgba(255, 255, 255, 0.1); opacity: 0.8; }
+  .contact-m__lets { left: 199.6px; top: 320px; --r: -3deg; font-size: 80px; }
+  .contact-m__something { left: 200.2px; top: 382.96px; font-size: 80px; }
+  .contact-m__great { left: 197.95px; top: 449.6px; --r: 3deg; font-size: 80px; color: var(--red); }
+  .contact-m__email {
+    left: 203.95px; top: 517.25px;
+    font-size: 18px;
+    text-decoration: underline;
+    text-decoration-thickness: 0.9px;
+    text-underline-offset: 3.5px;
+    text-decoration-skip-ink: none;
+  }
+
+  .footer { width: 402px; height: 62.5px; padding: 0 16px; border-top: 1px solid rgba(255, 255, 255, 0.3); }
+  .footer__link { gap: 8px; }
+  .footer__link > span:first-child { font-size: 10px; letter-spacing: 2px; margin-right: -2px; }
+  .footer .arrow--6 { width: 7px; height: 7px; opacity: 0.6; }
+  .footer .arrow--6 .arrow__line { width: 9.899px; }
+  .footer .arrow--6 .arrow__img { inset: -3.68px -5.05% -3.68px 0; }
+
+  /* ---------- Menu (Figma 256:41071) ---------- */
+  .menu:not([hidden]) {
+    display: block;
+    position: fixed;
+    left: 0; top: 0;
+    z-index: 50;
+    width: 402px;
+    height: var(--menu-h, 874px);
+    background: #0b0b0b url("assets/menu-bg.png") center / cover no-repeat;
+  }
+  .menu__bar { position: relative; height: 68px; border-bottom: 1px solid var(--hair); }
+  .menu__close { position: absolute; right: 20px; top: 16px; width: 36px; height: 36px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .menu__close svg { display: block; }
+  .menu__link { position: absolute; left: 20px; font-family: var(--anton); font-size: 33px; line-height: 1; color: var(--white); }
+  .menu__cta {
+    position: absolute;
+    left: 20px; right: 20px; bottom: 68px;
+    height: 52px;
+    display: flex; align-items: center; justify-content: center; gap: 20px;
+    background: #cc0000;
+    border: 1px solid var(--white);
+    font-family: var(--manrope); font-weight: 500; font-size: 13px; letter-spacing: 2.6px; text-transform: uppercase;
+    color: var(--white);
+  }
+  .menu__cta > span:first-child { margin-right: -2.6px; }
 }
