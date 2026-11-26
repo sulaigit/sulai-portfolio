@@ -322,9 +322,19 @@
     sweep();
   }
 
+  // The visitor's tap opens the site AND unlocks audio, so the hero stack always has sound.
+  var intro = $('.intro'), itap = $('.intro__tap');
+  var entered = false, onEnter = null;
+  function enter() { if (entered) return; entered = true; if (onEnter) onEnter(); }
+  intro.addEventListener('click', enter);
+  intro.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); } });
+  var waitForEnter = function () { return entered ? Promise.resolve() : new Promise(function (r) { onEnter = r; }); };
+  if (itap && window.matchMedia('(hover: hover) and (pointer: fine)').matches) itap.textContent = 'CLICK TO ENTER';
+
   async function runIntro() {
     var fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
     if (!skipped) {
+      try { intro.focus({ preventScroll: true }); } catch (e) {}
       istar.animate([
         { opacity: 0, transform: 'scale(0.55) rotate(-60deg)' },
         { opacity: 1, transform: 'scale(1) rotate(0deg)' }
@@ -333,28 +343,38 @@
         { opacity: 0, letterSpacing: '2px', textIndent: '2px' },
         { opacity: 1, letterSpacing: '6px', textIndent: '6px' }
       ], { duration: 1200, delay: 200, easing: EASE_OUT, fill: 'forwards' });
-      await wait(1150);
+      await Promise.race([wait(1150), waitForEnter()]);
       await fontsReady;
-      // a single slow breath before opening
-      await istar.animate([
-        { transform: 'scale(1) rotate(0deg)' },
-        { transform: 'scale(1.08) rotate(0deg)', offset: 0.5 },
-        { transform: 'scale(1) rotate(0deg)' }
-      ], { duration: 700, easing: 'ease-in-out' }).finished;
+      if (!entered) {
+        // gentle breathing star + pulsing prompt until the visitor taps
+        var breathe = istar.animate([
+          { transform: 'scale(1)' }, { transform: 'scale(1.08)', offset: 0.5 }, { transform: 'scale(1)' }
+        ], { duration: 1800, easing: 'ease-in-out', iterations: Infinity });
+        itap.animate([{ opacity: 0, translate: '-50% 6px' }, { opacity: 1, translate: '-50% 0' }],
+          { duration: 700, easing: EASE_OUT, fill: 'forwards' });
+        var pulse = itap.animate([{ opacity: 1 }, { opacity: 0.35 }, { opacity: 1 }],
+          { duration: 1800, delay: 700, easing: 'ease-in-out', iterations: Infinity });
+        await waitForEnter();
+        breathe.cancel(); pulse.cancel();
+      }
     } else {
       await fontsReady;
     }
     istar.getAnimations().forEach(function (a) { a.cancel(); });
     istar.style.opacity = '1';
-    iword.getAnimations().forEach(function (a) { a.cancel(); });
-    iword.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: 'forwards' });
-    setTimeout(playHero, skipped ? 100 : 520);
-    await openStar(skipped ? 700 : 1500);
+    [iword, itap].forEach(function (el) {
+      if (!el) return;
+      var o = getComputedStyle(el).opacity;
+      el.getAnimations().forEach(function (a) { a.cancel(); });
+      el.animate([{ opacity: o }, { opacity: 0 }], { duration: 300, fill: 'forwards' });
+    });
+    setTimeout(playHero, skipped ? 100 : 420);
+    await openStar(skipped ? 700 : 1400);
     finishIntro();
   }
 
-  $('.intro').addEventListener('click', function () { skipped = true; });
   if (location.hash && location.hash !== '#top') { skipped = true; }   // jump links skip the intro
+  window.__motionReady = true;
 
   runIntro().catch(function () {
     finishIntro();
