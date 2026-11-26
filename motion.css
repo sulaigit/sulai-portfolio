@@ -1,26 +1,26 @@
 /* =====================================================================
-   Motion layer — intro star, falling text stacks, reveals, star particles.
+   Motion layer — star intro, falling text stacks, scroll reveals.
    Everything here only applies when html.motion is set (JS on, motion allowed),
    so the page is fully visible without JavaScript or with reduced motion.
    ===================================================================== */
 
-/* ---------- Intro: the star opens the site ---------- */
+/* ---------- Intro: the star grows into a window onto the site ---------- */
 .intro { display: none; }
 html.motion .intro {
   display: block;
   position: fixed;
   inset: 0;
   z-index: 100;
-  pointer-events: auto;
   cursor: pointer;
 }
 .intro__veil {
   position: absolute;
   inset: 0;
   background: #0b0b0b;
-  /* --hole is animated from JS: the star punches a widening window into the page */
-  -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--hole, 0px), #000 calc(var(--hole, 0px) + 1.5px));
-          mask: radial-gradient(circle at 50% 50%, transparent var(--hole, 0px), #000 calc(var(--hole, 0px) + 1.5px));
+  /* A star-shaped hole (size --hole, driven from JS) cut out of a solid veil */
+  -webkit-mask: url("assets/star.svg") center / var(--hole, 0px) var(--hole, 0px) no-repeat, linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+          mask: url("assets/star.svg") center / var(--hole, 0px) var(--hole, 0px) no-repeat exclude, linear-gradient(#000, #000);
 }
 .intro__star {
   position: absolute;
@@ -30,14 +30,14 @@ html.motion .intro {
   height: 86px;
   margin: -43px 0 0 -43px;
   opacity: 0;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
 }
 .intro__star img { display: block; width: 100%; height: 100%; }
 .intro__word {
   position: absolute;
   left: 50%;
-  top: calc(50% + 78px);
-  transform: translateX(-50%);
+  top: calc(50% + 80px);
+  translate: -50% 0;
   font-family: var(--manrope);
   font-weight: 500;
   font-size: 12px;
@@ -51,65 +51,13 @@ html.motion.intro-done .intro { display: none; }
 html.motion.intro-running body { overflow: hidden; }
 html.motion { scrollbar-gutter: stable; }   /* keep the width steady while the intro locks scrolling */
 
-/* ---------- Star particle canvas + scroll guide ---------- */
-.stars-canvas { display: none; }
-html.motion .stars-canvas {
-  display: block;
-  position: fixed;
-  inset: 0;
-  width: 100%;              /* not 100vw: that includes the scrollbar and adds sideways scroll */
-  height: 100%;
-  z-index: 40;
-  pointer-events: none;
-}
-.guide { display: none; }
-@media (min-width: 768px) {
-  html.motion .guide {
-    display: block;
-    position: fixed;
-    right: 26px;
-    top: 14vh;
-    bottom: 14vh;
-    width: 18px;
-    z-index: 41;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .8s ease;
-  }
-  html.motion.intro-done .guide { opacity: 1; }
-  .guide__track {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: rgba(255, 255, 255, 0.12);
-  }
-  .guide__fill {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 1px;
-    height: calc(var(--p, 0) * 100%);
-    background: linear-gradient(rgba(220, 0, 22, 0), #dc0016);
-  }
-  .guide__star {
-    position: absolute;
-    left: 0;
-    top: calc(var(--p, 0) * 100%);
-    width: 18px;
-    height: 18px;
-    margin-top: -9px;
-    transform: rotate(var(--spin, 0deg));
-    filter: drop-shadow(0 0 6px rgba(220, 0, 22, 0.8));
-  }
-  .guide__star img { display: block; width: 100%; height: 100%; }
-}
-
 /* ---------- Hidden-until-animated states (no flash before JS runs) ---------- */
 html.motion .m-drop:not(.is-in),
 html.motion .m-rise:not(.is-in),
 html.motion .m-fade:not(.is-in) { opacity: 0; }
+
+/* Contact words fall from the top edge of the red contact section, clipped by it */
+html.motion .contact { overflow: hidden; }
 
 /* ---------- Hover polish ---------- */
 html.motion .card { transition: border-color .35s ease, transform .5s cubic-bezier(.2, .8, .2, 1); }
@@ -124,14 +72,8 @@ html.motion .menu__cta .arrow { transition: translate .35s cubic-bezier(.2, .8, 
 html.motion .nav__cta:hover .arrow,
 html.motion .footer__link:hover .arrow,
 html.motion .menu__cta:hover .arrow { translate: 3px -3px; }
-html.motion .sec-head__title .star { transition: rotate 1.2s cubic-bezier(.2, .8, .2, 1); }
-html.motion .sec-head__title:hover .star { rotate: 180deg; }
 html.motion .job { transition: background-color .4s ease; }
 html.motion .job:not(.job--current):hover { background-color: rgba(255, 255, 255, 0.03); }
-
-/* Scroll mouse wheel hint */
-@keyframes mouse-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 5px; } }
-html.motion.intro-done .scroll__mouse { animation: mouse-bob 1.8s ease-in-out infinite 1.2s; }
 
 /* Mobile menu opening */
 @keyframes menu-in { from { opacity: 0; } to { opacity: 1; } }

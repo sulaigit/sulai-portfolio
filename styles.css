@@ -211,28 +211,6 @@ img { display: block; max-width: none; }
 .app-icon__fg > div { position: absolute; inset: -3.52% -4.41% -3.52% -4.6%; }
 .app-icon__fg img { width: 100%; height: 100%; }
 
-.scroll {
-  position: absolute;
-  left: 731px;
-  top: 645px;              /* "SCROLL" cap top at 649.4 */
-  width: 62px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-.scroll__label {
-  width: 100%;
-  font-family: var(--manrope);
-  font-weight: 400;
-  font-size: 13px;
-  line-height: normal;
-  letter-spacing: 2.6px;
-  text-transform: uppercase;
-  text-align: center;
-  opacity: 0.7;
-}
-.scroll__mouse { width: 20.5px; height: 31px; opacity: 0.5; }   /* mouse icon at 751.8, 675 */
 
 /* =============== SECTION HEADINGS (shared) =============== */
 .sec-head { width: 100%; display: flex; align-items: center; justify-content: center; }
@@ -548,7 +526,6 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
 .job__year { margin-right: -2.8px; }
 .job__name, .job__current { margin-right: -3.2px; }
 .case-link > span:first-child { margin-right: -4.2px; }
-.scroll__label { text-indent: 2.6px; }
 .quote__role { text-indent: 2.8px; }
 .hero__watermark-rot p { text-indent: -14.56px; }
 .contact__watermark-rot p { text-indent: -9.16px; }
@@ -576,7 +553,6 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
     margin-left: -27.59px;
     zoom: var(--s, 1);
   }
-  .scroll { position: relative; left: auto; top: auto; margin: 32px auto 0; }
 
   /* ---- Section headings ---- */
   .sec-head__row { width: 100%; }
@@ -652,7 +628,8 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
 @media (min-width: 1200px) {
   /* The new hero headline group is the previous one scaled 0.899 and moved up
      (checked against BUILDING PRODUCT, I'M SULAI, DESIGN and @ in the export). */
-  .hero__title { transform-origin: 0 0; transform: translate(68.84px, -98.63px) scale(0.899); }
+  /* Scroll indicator removed: the group (178–605) is re-centred between the nav and the hero bottom (+46.3px) */
+  .hero__title { transform-origin: 0 0; transform: translate(68.84px, -52.33px) scale(0.899); }
   .hero__at { top: 438.2px; }
   .app-icon { left: calc(50% + 356.8px); top: calc(50% + 198.7px); }
   /* Watermark: 698px, tighter tracking, raised to fit the 802px hero */
@@ -701,9 +678,8 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   .hero-m__design { left: 199.25px; top: 385px; --r: 3deg; font-size: 92px; color: var(--red); }
   .hero-m__at { left: 178.35px; top: 464.9px; font-size: 20px; }
   .app-icon--m { left: 196.4px; top: 444.5px; transform: scale(0.6183); transform-origin: 0 0; }
-  .scroll { left: 170.1px; top: 545.5px; }
-  .scroll__label { font-size: 10px; letter-spacing: 2px; text-indent: 2px; }
-  .scroll__mouse { width: 17.84px; height: 27px; }
+  /* Scroll indicator removed: headline group (134.6–481.6) re-centred between nav and hero bottom (+50.9px) */
+  .hero-m > :not(.hero-m__wm) { margin-top: 50.9px; }
 
   /* ---------- Section headings: absolute, by glyph centre ---------- */
   .sec-head__row, .sec-head__title { display: contents; }

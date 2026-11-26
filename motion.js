@@ -1,11 +1,12 @@
 /* =====================================================================
    Motion layer for the portfolio.
-   Story: a single red star opens the site, bursts into a field of star
-   particles that drift with your scroll, travels down the right-hand guide,
-   and re-appears at each section heading. Headlines fall from the top and
-   land one by one as a stack (hero + contact); section titles, cards, rows
-   and quotes arrange themselves as you reach them.
-   Uses the Web Animations API + one <canvas>; no libraries.
+   - Intro: the red star fades in, breathes, then grows into a star-shaped
+     window that opens onto the site.
+   - Hero: words fall from the top and land one by one as a stack.
+   - Contact: the same stack, falling from the top edge of its own red section.
+   - Section headings stack in; work cards slide in from their own side;
+     experience rows, quotes and footer links arrange themselves on scroll.
+   Uses the Web Animations API only; no libraries, no particles.
    ===================================================================== */
 (function () {
   'use strict';
@@ -17,125 +18,10 @@
   var page = $('.page');
   var mqMobile = window.matchMedia('(max-width: 767px)');
   var zoom = function () { return parseFloat(page.style.zoom) || 1; };
-  var visible = function (el) { return el && el.getClientRects().length > 0; };
   var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
-  var EASE_OUT = 'cubic-bezier(.2,.8,.2,1)';
+  var EASE_OUT = 'cubic-bezier(.16,1,.3,1)';                // easeOutExpo-like: soft landing
   var EASE_FALL = 'cubic-bezier(.55,0,.85,.35)';           // accelerate like gravity
-
-  /* ---------------------------------------------------------------
-     STAR PARTICLES (fixed canvas over the page, pointer-events none)
-     --------------------------------------------------------------- */
-  var Stars = (function () {
-    var cv = $('.stars-canvas');
-    var ctx = cv.getContext('2d');
-    var W = 0, H = 0, dpr = 1, last = 0, scrollPrev = window.scrollY, scrollVel = 0;
-    var mouse = { x: -9999, y: -9999 };
-    var parts = [];
-    var RED = '220,0,22', WHITE = '255,255,255';
-
-    function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      W = window.innerWidth; H = window.innerHeight;
-      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    function rand(a, b) { return a + Math.random() * (b - a); }
-
-    // The Figma star: 4 points, inner corners at 0.3408 of the radius
-    function drawStar(x, y, r, rot, color, a) {
-      var k = 0.3408 * r;
-      ctx.save();
-      ctx.translate(x, y); ctx.rotate(rot);
-      ctx.beginPath();
-      ctx.moveTo(0, -r); ctx.lineTo(k, -k); ctx.lineTo(r, 0); ctx.lineTo(k, k);
-      ctx.lineTo(0, r); ctx.lineTo(-k, k); ctx.lineTo(-r, 0); ctx.lineTo(-k, -k);
-      ctx.closePath();
-      ctx.fillStyle = 'rgba(' + color + ',' + a + ')';
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function ambient(fromCenter) {
-      var depth = rand(0.25, 1);
-      var p = {
-        kind: 'amb',
-        x: fromCenter ? W / 2 : rand(0, W), y: fromCenter ? H / 2 : rand(0, H),
-        vx: rand(-0.12, 0.12) * depth, vy: rand(-0.18, -0.04) * depth,
-        r: rand(1.1, 3.2) * depth + 0.6, rot: rand(0, Math.PI), vr: rand(-0.01, 0.01),
-        depth: depth, color: Math.random() < 0.2 ? RED : WHITE,
-        base: rand(0.18, 0.55) * depth + 0.08, phase: rand(0, 6.28), tw: rand(0.6, 1.8),
-        fade: fromCenter ? 0 : 1
-      };
-      if (fromCenter) {                                        // flung out by the intro burst, then settles
-        var ang = rand(0, 6.28), sp = rand(4, 14) * depth;
-        p.vx2 = Math.cos(ang) * sp; p.vy2 = Math.sin(ang) * sp;
-      }
-      return p;
-    }
-
-    function seed(fromCenter) {
-      var n = mqMobile.matches ? 26 : 56;
-      for (var i = 0; i < n; i++) parts.push(ambient(fromCenter));
-    }
-
-    function burst(x, y, n, opt) {
-      opt = opt || {};
-      for (var i = 0; i < n; i++) {
-        var ang = opt.up ? rand(Math.PI * 1.05, Math.PI * 1.95) : rand(0, 6.28);
-        var sp = rand(opt.min || 1.5, opt.max || 6);
-        parts.push({
-          kind: 'burst', x: x, y: y,
-          vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
-          r: rand(opt.rmin || 1.2, opt.rmax || 3.6), rot: rand(0, 3.14), vr: rand(-0.08, 0.08),
-          color: Math.random() < (opt.red == null ? 0.6 : opt.red) ? RED : WHITE,
-          life: 1, decay: rand(0.012, 0.024), depth: 1
-        });
-      }
-    }
-
-    function tick(t) {
-      requestAnimationFrame(tick);
-      if (document.hidden) return;
-      var dt = Math.min(2, (t - last) / 16.67 || 1); last = t;
-      var sy = window.scrollY, dy = sy - scrollPrev; scrollPrev = sy;
-      scrollVel += (dy - scrollVel) * 0.2;
-      ctx.clearRect(0, 0, W, H);
-      for (var i = parts.length - 1; i >= 0; i--) {
-        var p = parts[i];
-        if (p.kind === 'amb') {
-          if (p.vx2 != null) {                                  // intro fling
-            p.x += p.vx2 * dt; p.y += p.vy2 * dt; p.vx2 *= 0.93; p.vy2 *= 0.93;
-            if (Math.abs(p.vx2) + Math.abs(p.vy2) < 0.05) { p.vx2 = null; }
-          }
-          p.x += p.vx * dt;
-          p.y += (p.vy - scrollVel * 0.45 * p.depth) * dt;      // parallax against scroll
-          p.rot += p.vr * dt + scrollVel * 0.002;
-          var mx = p.x - mouse.x, my = p.y - mouse.y, d2 = mx * mx + my * my;
-          if (d2 < 14400) { var f = (1 - d2 / 14400) * 1.6; p.x += (mx / Math.sqrt(d2 + 1)) * f; p.y += (my / Math.sqrt(d2 + 1)) * f; }
-          if (p.x < -10) p.x = W + 10; else if (p.x > W + 10) p.x = -10;
-          if (p.y < -10) p.y = H + 10; else if (p.y > H + 10) p.y = -10;
-          if (p.fade < 1) p.fade = Math.min(1, p.fade + 0.02 * dt);
-          var a = p.base * (0.55 + 0.45 * Math.sin(t / 1000 * p.tw + p.phase)) * p.fade;
-          var stretch = 1 + Math.min(2.5, Math.abs(scrollVel) * 0.04 * p.depth);
-          drawStar(p.x, p.y, p.r * stretch, p.rot, p.color, a);
-        } else {
-          p.x += p.vx * dt; p.y += p.vy * dt;
-          p.vx *= 0.95; p.vy = p.vy * 0.95 + 0.05 * dt;
-          p.rot += p.vr * dt; p.life -= p.decay * dt;
-          if (p.life <= 0) { parts.splice(i, 1); continue; }
-          drawStar(p.x, p.y, p.r * (0.6 + 0.4 * p.life), p.rot, p.color, p.life * 0.9);
-        }
-      }
-    }
-
-    resize();
-    window.addEventListener('resize', resize);
-    window.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') { mouse.x = e.clientX; mouse.y = e.clientY; } }, { passive: true });
-    document.addEventListener('pointerleave', function () { mouse.x = mouse.y = -9999; });
-    requestAnimationFrame(tick);
-    return { burst: burst, seed: seed, size: function () { return { W: W, H: H }; } };
-  })();
 
   /* ---------------------------------------------------------------
      Building blocks
@@ -150,40 +36,41 @@
     return anim;
   }
 
-  // Falls from above the viewport, lands with a small squash and bounce.
-  function drop(el, delay, onLand) {
-    if (!el) return 0;
+  // Falls `dist` px, lands with a small squash and one soft bounce.
+  function drop(el, delay, dist) {
+    if (!el) return;
     el.classList.add('m-drop');
-    var r = el.getBoundingClientRect();
-    var dist = Math.max(260, (r.bottom + 80) / zoom() * 1.15);   // start fully above the viewport
-    var dur = 1150;
     done(el, el.animate([
-      { translate: '0 ' + (-dist) + 'px', scale: '0.96 1.08', opacity: 0, easing: EASE_FALL },
-      { opacity: 1, offset: 0.2, easing: EASE_FALL },
+      { translate: '0 ' + (-dist) + 'px', scale: '0.97 1.06', opacity: 0, easing: EASE_FALL },
+      { opacity: 1, offset: 0.18, easing: EASE_FALL },
       { translate: '0 0', scale: '1 1', opacity: 1, offset: 0.56, easing: 'ease-out' },
-      { translate: '0 0', scale: '1.04 0.93', offset: 0.66, easing: 'ease-out' },
-      { translate: '0 -12px', scale: '0.99 1.02', offset: 0.8, easing: 'ease-in' },
+      { translate: '0 0', scale: '1.035 0.94', offset: 0.66, easing: 'ease-out' },
+      { translate: '0 -10px', scale: '0.995 1.015', offset: 0.8, easing: 'ease-in' },
       { translate: '0 0', scale: '1 1', opacity: 1 }
-    ], { duration: dur, delay: delay, fill: 'backwards' }));
-    if (onLand) setTimeout(function () { onLand(el); }, delay + dur * 0.56);
-    return dur;
+    ], { duration: 1150, delay: delay, fill: 'backwards' }));
   }
 
-  // Lands with a puff of star dust along the bottom edge of the word.
-  function puff(el) {
-    if (!visible(el)) return;
+  // Hero: start fully above the top of the screen
+  function dropFromTop(el, delay) {
+    if (!el) return;
     var r = el.getBoundingClientRect();
-    Stars.burst(r.left + r.width * 0.5, r.bottom - r.height * 0.12, mqMobile.matches ? 8 : 16,
-      { up: true, min: 1.5, max: 5, rmin: 1, rmax: 2.6, red: 0.45 });
+    drop(el, delay, Math.max(260, (r.bottom + 80) / zoom() * 1.15));
+  }
+
+  // Contact: start just above the top edge of the red contact section (it clips them)
+  function dropFromSection(el, delay, section) {
+    if (!el) return;
+    var r = el.getBoundingClientRect(), s = section.getBoundingClientRect();
+    drop(el, delay, Math.max(120, (r.bottom - s.top + 24) / zoom() * 1.12));
   }
 
   function pop(el, delay) {
     if (!el) return;
     el.classList.add('m-drop');
     done(el, el.animate([
-      { scale: '0', rotate: '-30deg', opacity: 0 },
-      { scale: '1.18', rotate: '6deg', opacity: 1, offset: 0.6 },
-      { scale: '1', rotate: '0deg', opacity: 1 }
+      { scale: '0.4', opacity: 0 },
+      { scale: '1.08', opacity: 1, offset: 0.6 },
+      { scale: '1', opacity: 1 }
     ], { duration: 700, delay: delay, easing: EASE_OUT, fill: 'backwards' }));
   }
 
@@ -192,22 +79,20 @@
     o = o || {};
     el.classList.add('m-rise');
     done(el, el.animate([
-      { translate: (o.x || 0) + 'px ' + (o.y == null ? 48 : o.y) + 'px', opacity: 0, rotate: (o.rot || 0) + 'deg' },
-      { translate: '0 0', opacity: 1, rotate: '0deg' }
+      { translate: (o.x || 0) + 'px ' + (o.y == null ? 48 : o.y) + 'px', opacity: 0 },
+      { translate: '0 0', opacity: 1 }
     ], { duration: o.dur || 1000, delay: delay, easing: o.ease || EASE_OUT, fill: 'backwards' }));
   }
 
-  function fade(el, delay, o) {
+  function fade(el, delay, dur) {
     if (!el) return;
-    o = o || {};
     el.classList.add('m-fade');
-    done(el, el.animate([
-      { opacity: 0, scale: o.from || '1.12' },
-      { opacity: 1, scale: '1' }
-    ], { duration: o.dur || 1800, delay: delay, easing: EASE_OUT, fill: 'backwards' }));
+    done(el, el.animate([{ opacity: 0 }, { opacity: 1 }],
+      { duration: dur || 1400, delay: delay, easing: 'ease-out', fill: 'backwards' }));
   }
 
-  // Run fn once when el scrolls into view.
+  // Run fn once when el scrolls into view
+  var watched = [];
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (!e.isIntersecting) return;
@@ -216,7 +101,6 @@
       if (fn) fn(e.target);
     });
   }, { threshold: 0.18, rootMargin: '0px 0px -6% 0px' });
-  var watched = [];
   function onView(el, fn) { if (!el) return; el.__onView = fn; io.observe(el); watched.push(el); }
   // Fast scrolls and jump links can skip past an element between frames: anything
   // already above the bottom of the screen is played straight away.
@@ -229,6 +113,11 @@
       return true;
     });
   }
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(function () { ticking = false; sweep(); });
+  }, { passive: true });
 
   /* ---------------------------------------------------------------
      Pre-hide everything that animates in (the intro veil covers this)
@@ -240,173 +129,130 @@
   var contactMob = ['.contact-m__great', '.contact-m__something', '.contact-m__lets'].map(function (s) { return $(s); });
   var contactEmail = [$('.contact__email'), $('.contact-m__email')];
   heroDesk.concat(heroMob, heroIcons, contactDesk, contactMob, contactEmail).forEach(function (el) { if (el) el.classList.add('m-drop'); });
-  [$('.hero__watermark-rot'), $('.hero-m__wm'), $('.contact__watermark-rot'), $('.contact-m__wm'), $('.scroll'), $('.nav')].forEach(function (el) { if (el) el.classList.add('m-fade'); });
+  [$('.hero__watermark-rot'), $('.hero-m__wm'), $('.contact__watermark-rot'), $('.contact-m__wm'), $('.nav')].forEach(function (el) { if (el) el.classList.add('m-fade'); });
   $$('.sec-head__red, .sec-head__white, .sec-head__meta, .sec-head__title .star, .card, .job, .quote, .footer__link').forEach(function (el) { el.classList.add('m-rise'); });
 
   /* ---------------------------------------------------------------
-     HERO: words fall and stack from the bottom up
+     HERO: words fall from the top and stack from the bottom up.
+     The SULAI watermark stays put (fades in, never moves).
      --------------------------------------------------------------- */
   function playHero() {
     var nav = $('.nav');
-    nav.classList.add('m-fade');
     done(nav, nav.animate([{ translate: '0 -100%', opacity: 0 }, { translate: '0 0', opacity: 1 }],
-      { duration: 900, delay: 150, easing: EASE_OUT, fill: 'backwards' }));
-    fade($('.hero__watermark-rot'), 0, { from: '1.18', dur: 2200 });
-    fade($('.hero-m__wm'), 0, { from: '1.18', dur: 2200 });
+      { duration: 1000, delay: 250, easing: EASE_OUT, fill: 'backwards' }));
+    fade($('.hero__watermark-rot'), 0, 1800);
+    fade($('.hero-m__wm'), 0, 1800);
 
-    var words = mqMobile.matches ? heroMob : heroDesk;
-    var other = mqMobile.matches ? heroDesk : heroMob;
-    other.concat(mqMobile.matches ? [heroIcons[0]] : [heroIcons[1]]).forEach(function (el) { if (el) el.classList.add('is-in'); });
-    var t = 250;
-    words.forEach(function (el, i) {
-      drop(el, t, puff);
-      t += i < 2 ? 330 : 260;
-    });
-    pop(mqMobile.matches ? heroIcons[1] : heroIcons[0], t + 380);
-    var sc = $('.scroll');
-    done(sc, sc.animate([{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }],
-      { duration: 900, delay: t + 700, easing: EASE_OUT, fill: 'backwards' }));
+    var mob = mqMobile.matches;
+    var words = mob ? heroMob : heroDesk;
+    (mob ? heroDesk.concat([heroIcons[0]]) : heroMob.concat([heroIcons[1]])).forEach(function (el) { if (el) el.classList.add('is-in'); });
+    var t = 200;
+    words.forEach(function (el, i) { dropFromTop(el, t); t += i < 2 ? 320 : 260; });
+    pop(mob ? heroIcons[1] : heroIcons[0], t + 360);
   }
 
   /* ---------------------------------------------------------------
-     CONTACT: same falling stack when the footer comes into view
+     CONTACT: same falling stack, from the top of its red section
      --------------------------------------------------------------- */
-  onView($('.contact'), function () {
+  var contact = $('.contact');
+  onView(contact, function () {
     var mob = mqMobile.matches;
-    var words = mob ? contactMob : contactDesk;
-    (mob ? contactDesk : contactMob).forEach(function (el) { if (el) el.classList.add('is-in'); });
-    fade(mob ? $('.contact-m__wm') : $('.contact__watermark-rot'), 0, { from: '1.15', dur: 2000 });
+    (mob ? contactDesk.concat([contactEmail[0]]) : contactMob.concat([contactEmail[1]])).forEach(function (el) { if (el) el.classList.add('is-in'); });
     (mob ? $('.contact__watermark-rot') : $('.contact-m__wm')).classList.add('is-in');
-    var t = 100;
-    words.forEach(function (el, i) { drop(el, t, puff); t += i < 1 ? 330 : 280; });
-    var em = mob ? contactEmail[1] : contactEmail[0];
-    (mob ? contactEmail[0] : contactEmail[1]).classList.add('is-in');
-    rise(em, t + 450, { y: 24, dur: 900 });
+    fade(mob ? $('.contact-m__wm') : $('.contact__watermark-rot'), 0, 1600);
+    var t = 150;
+    (mob ? contactMob : contactDesk).forEach(function (el, i) { dropFromSection(el, t, contact); t += i < 1 ? 320 : 280; });
+    rise(mob ? contactEmail[1] : contactEmail[0], t + 450, { y: 24, dur: 900 });
   });
 
   /* ---------------------------------------------------------------
-     SECTION HEADINGS: white word rises, red word drops onto it,
-     the star spins in and sheds a few particles
+     SECTION HEADINGS: meta slides in, white word rises,
+     red word drops onto it; the star simply fades in (no motion)
      --------------------------------------------------------------- */
   $$('.sec-head__title').forEach(function (title) {
     // On mobile the title box is display:contents (no box to observe), so watch its heading block
     onView(title.closest('.sec-head') || title.parentElement, function () {
-      var white = $('.sec-head__white', title), red = $('.sec-head__red', title), star = $('.star', title);
       var meta = title.parentElement && $('.sec-head__meta', title.parentElement);
       rise(meta, 0, { x: -24, y: 0, dur: 900 });
-      rise(white, 80, { y: 70, dur: 1000 });
-      rise(red, 380, { y: -90, dur: 1100, ease: 'cubic-bezier(.3,1.35,.5,1)' });
-      star.classList.add('m-rise');
-      done(star, star.animate([
-        { scale: '0', rotate: '-270deg', opacity: 0 },
-        { scale: '1.35', rotate: '20deg', opacity: 1, offset: 0.7 },
-        { scale: '1', rotate: '0deg', opacity: 1 }
-      ], { duration: 1100, delay: 700, easing: EASE_OUT, fill: 'backwards' }));
-      setTimeout(function () {
-        if (!visible(star)) return;
-        var r = star.getBoundingClientRect();
-        Stars.burst(r.left + r.width / 2, r.top + r.height / 2, mqMobile.matches ? 12 : 22, { min: 1, max: 5, red: 0.8 });
-      }, 700 + 770);
+      rise($('.sec-head__white', title), 80, { y: 70, dur: 1100 });
+      rise($('.sec-head__red', title), 380, { y: -90, dur: 1150, ease: 'cubic-bezier(.3,1.3,.5,1)' });
+      fade($('.star', title), 900, 900);
     });
   });
 
   /* ---------------------------------------------------------------
-     CARDS, EXPERIENCE ROWS, QUOTES, FOOTER: staggered arrangement
+     WORK CARDS: left-column cards slide in from the left, right-column
+     cards from the right (on mobile they alternate)
      --------------------------------------------------------------- */
-  function staggerGroup(items, opts) {
+  function staggerGroup(items, gap, play) {
     var queue = [], timer = null;
     items.forEach(function (el) {
       onView(el, function () {
         queue.push(el);
         if (!timer) timer = setTimeout(function () {
-          queue.forEach(function (q, i) { opts.play(q, i * opts.gap); });
+          queue.forEach(function (q, i) { play(q, i * gap); });
           queue = []; timer = null;
         }, 30);
       });
     });
   }
-  staggerGroup($$('.card'), {
-    gap: 140,
-    play: function (card, d) {
-      rise(card, d, { y: 90, dur: 1100 });
-      $$('.card__crop .crop', card).forEach(function (img) {
-        img.animate([{ scale: '1.18' }, { scale: '1' }], { duration: 1600, delay: d, easing: EASE_OUT });
-      });
-    }
-  });
-  staggerGroup($$('.job'), {
-    gap: 90,
-    play: function (row, d) {
-      if (row.classList.contains('job--current')) {
-        row.classList.add('m-rise');
-        done(row, row.animate([
-          { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
-          { clipPath: 'inset(0 0% 0 0)', opacity: 1 }
-        ], { duration: 1000, delay: d, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'backwards' }));
-        $$('.job__left > *, .job__right-stack > *', row).forEach(function (c, i) {
-          c.animate([{ translate: '0 30px', opacity: 0 }, { translate: '0 0', opacity: 1 }],
-            { duration: 800, delay: d + 350 + i * 90, easing: EASE_OUT, fill: 'backwards' });
-        });
-      } else {
-        rise(row, d, { y: 50, dur: 900 });
-      }
-    }
-  });
-  // Quotes live in a sideways row (some start off-screen), so the row triggers them all.
-  onView($('.reco__row'), function (row) {
-    var qs = $$('.quote', row).sort(function (a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
-    qs.forEach(function (q, i) { rise(q, i * 160, { x: 140, y: 0, dur: 1100, rot: 3 }); });
-  });
-  staggerGroup($$('.footer__link'), { gap: 90, play: function (a, d) { rise(a, d, { y: 20, dur: 700 }); } });
-
-  /* ---------------------------------------------------------------
-     SCROLL: parallax watermarks, guide star, its trail
-     --------------------------------------------------------------- */
-  var guide = $('.guide'), heroWm = $('.hero__watermark-rot'), heroWmM = $('.hero-m__wm');
-  var cWm = $('.contact__watermark-rot'), cWmM = $('.contact-m__wm'), contact = $('.contact');
-  var lastP = -1, ticking = false, trail = 0;
-  function onScroll() {
-    if (ticking) return; ticking = true;
-    requestAnimationFrame(function () {
-      ticking = false;
-      var y = window.scrollY, z = zoom(), vh = window.innerHeight;
-      var max = Math.max(1, document.documentElement.scrollHeight - vh);
-      var p = Math.min(1, Math.max(0, y / max));
-      var off = Math.min(y, vh * 1.2) / z;
-      if (heroWm) heroWm.style.translate = '0 ' + (off * 0.28).toFixed(1) + 'px';
-      if (heroWmM) heroWmM.style.translate = '0 ' + (off * 0.28).toFixed(1) + 'px';
-      var cr = contact.getBoundingClientRect();
-      var drift = ((cr.top - vh * 0.4) / z) * -0.12;
-      if (cWm) cWm.style.translate = drift.toFixed(1) + 'px 0';
-      if (cWmM) cWmM.style.translate = drift.toFixed(1) + 'px 0';
-      if (guide) {
-        guide.style.setProperty('--p', p.toFixed(4));
-        guide.style.setProperty('--spin', (p * 900).toFixed(1) + 'deg');
-        if (lastP >= 0 && Math.abs(p - lastP) > 0.0006 && visible(guide) && (trail++ % 2 === 0)) {
-          var gr = $('.guide__star', guide).getBoundingClientRect();
-          Stars.burst(gr.left + gr.width / 2, gr.top + gr.height / 2, 1, { min: 0.3, max: 1.4, rmin: 1, rmax: 2.2, red: 0.85 });
-        }
-      }
-      lastP = p;
-      sweep();
+  var cards = $$('.card');
+  staggerGroup(cards, 150, function (card, d) {
+    var mob = mqMobile.matches;
+    var left = mob ? cards.indexOf(card) % 2 === 0
+                   : Array.prototype.indexOf.call(card.parentElement.children, card) === 0;
+    rise(card, d, { x: left ? -180 : 180, y: 0, dur: 1200 });
+    $$('.card__crop .crop', card).forEach(function (img) {
+      img.animate([{ scale: '1.12' }, { scale: '1' }], { duration: 1600, delay: d, easing: EASE_OUT });
     });
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
+  });
 
   /* ---------------------------------------------------------------
-     INTRO: dark screen, the star appears, spins, and opens the site
+     EXPERIENCE ROWS, QUOTES, FOOTER
      --------------------------------------------------------------- */
-  var intro = $('.intro'), veil = $('.intro__veil'), istar = $('.intro__star'), iword = $('.intro__word');
-  var skipped = false, finished = false;
+  staggerGroup($$('.job'), 90, function (row, d) {
+    if (row.classList.contains('job--current')) {
+      done(row, row.animate([
+        { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
+        { clipPath: 'inset(0 0% 0 0)', opacity: 1 }
+      ], { duration: 1000, delay: d, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'backwards' }));
+      $$('.job__left > *, .job__right-stack > *', row).forEach(function (c, i) {
+        c.animate([{ translate: '0 30px', opacity: 0 }, { translate: '0 0', opacity: 1 }],
+          { duration: 800, delay: d + 350 + i * 90, easing: EASE_OUT, fill: 'backwards' });
+      });
+    } else {
+      rise(row, d, { y: 50, dur: 900 });
+    }
+  });
+  // Quotes live in a sideways row (some start off-screen), so the row triggers them all
+  onView($('.reco__row'), function (row) {
+    $$('.quote', row).sort(function (a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; })
+      .forEach(function (q, i) { rise(q, i * 160, { x: 140, y: 0, dur: 1100 }); });
+  });
+  staggerGroup($$('.footer__link'), 90, function (a, d) { rise(a, d, { y: 20, dur: 700 }); });
 
-  function openHole(dur) {
+  /* ---------------------------------------------------------------
+     INTRO: dark screen → the star fades in and breathes →
+     it grows into a star-shaped window that opens onto the site
+     --------------------------------------------------------------- */
+  var veil = $('.intro__veil'), istar = $('.intro__star'), iword = $('.intro__word');
+  var skipped = false, finished = false;
+  var smooth = function (k) { return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };   // easeInOutCubic
+
+  // One rAF timeline drives the star and the window together, so they stay in sync.
+  function openStar(dur) {
     return new Promise(function (res) {
-      var end = Math.hypot(window.innerWidth, window.innerHeight) / 2 + 40, t0 = performance.now();
+      var vmax = Math.max(window.innerWidth, window.innerHeight);
+      var endSize = vmax * 7;                                 // star hole big enough to clear the corners
+      var t0 = performance.now();
       (function step(now) {
         var k = Math.min(1, (now - t0) / dur);
-        var e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;   // easeInOutCubic
-        veil.style.setProperty('--hole', (e * end).toFixed(1) + 'px');
+        var e = smooth(k);
+        var size = 86 + (endSize - 86) * Math.pow(e, 1.6);
+        var s = size / 86;
+        veil.style.setProperty('--hole', size.toFixed(1) + 'px');
+        istar.style.transform = 'scale(' + s.toFixed(3) + ') rotate(' + (e * 45).toFixed(2) + 'deg)';
+        istar.style.opacity = String(Math.max(0, 1 - e * 3.2));
         if (k < 1) requestAnimationFrame(step); else res();
       })(t0);
     });
@@ -417,44 +263,42 @@
     root.classList.remove('intro-running');
     root.classList.add('intro-done');
     window.dispatchEvent(new Event('resize'));   // scrollbar is back: re-fit the page width
-    onScroll();
+    sweep();
   }
 
   async function runIntro() {
     var fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
-    istar.animate([
-      { opacity: 0, scale: '0.2', rotate: '-180deg' },
-      { opacity: 1, scale: '1', rotate: '0deg' }
-    ], { duration: 900, easing: EASE_OUT, fill: 'forwards' });
-    iword.animate([{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }],
-      { duration: 700, delay: 250, easing: EASE_OUT, fill: 'forwards' });
-    await wait(skipped ? 0 : 900);
-    await fontsReady;
     if (!skipped) {
       istar.animate([
-        { rotate: '0deg', scale: '1', filter: 'drop-shadow(0 0 0 rgba(220,0,22,0))' },
-        { rotate: '200deg', scale: '1.28', filter: 'drop-shadow(0 0 28px rgba(220,0,22,.9))', offset: 0.55 },
-        { rotate: '360deg', scale: '0.86', filter: 'drop-shadow(0 0 10px rgba(220,0,22,.6))' }
-      ], { duration: 650, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' });
-      await wait(620);
+        { opacity: 0, transform: 'scale(0.55) rotate(-60deg)' },
+        { opacity: 1, transform: 'scale(1) rotate(0deg)' }
+      ], { duration: 1100, easing: EASE_OUT, fill: 'forwards' });
+      iword.animate([
+        { opacity: 0, letterSpacing: '2px', textIndent: '2px' },
+        { opacity: 1, letterSpacing: '6px', textIndent: '6px' }
+      ], { duration: 1200, delay: 200, easing: EASE_OUT, fill: 'forwards' });
+      await wait(1150);
+      await fontsReady;
+      // a single slow breath before opening
+      await istar.animate([
+        { transform: 'scale(1) rotate(0deg)' },
+        { transform: 'scale(1.08) rotate(0deg)', offset: 0.5 },
+        { transform: 'scale(1) rotate(0deg)' }
+      ], { duration: 700, easing: 'ease-in-out' }).finished;
+    } else {
+      await fontsReady;
     }
-    // Burst: the star becomes the particle field
-    var c = Stars.size();
-    Stars.burst(c.W / 2, c.H / 2, mqMobile.matches ? 40 : 80, { min: 3, max: 16, rmin: 1.5, rmax: 5, red: 0.7 });
-    Stars.seed(true);
-    iword.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' });
-    istar.animate([
-      { rotate: '360deg', scale: '0.86', opacity: 1 },
-      { rotate: '540deg', scale: '16', opacity: 0 }
-    ], { duration: 900, easing: 'cubic-bezier(.7,0,.84,0)', fill: 'forwards' });
-    setTimeout(playHero, 180);
-    await openHole(1000);
+    istar.getAnimations().forEach(function (a) { a.cancel(); });
+    istar.style.opacity = '1';
+    iword.getAnimations().forEach(function (a) { a.cancel(); });
+    iword.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: 'forwards' });
+    setTimeout(playHero, skipped ? 100 : 520);
+    await openStar(skipped ? 700 : 1500);
     finishIntro();
   }
 
-  intro.addEventListener('click', function () { skipped = true; });
-  // Navigating to an in-page anchor (e.g. #work) skips the intro
-  if (location.hash && location.hash !== '#top') { skipped = true; }
+  $('.intro').addEventListener('click', function () { skipped = true; });
+  if (location.hash && location.hash !== '#top') { skipped = true; }   // jump links skip the intro
 
   runIntro().catch(function () {
     finishIntro();
