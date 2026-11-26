@@ -821,3 +821,63 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
 /* No blue focus ring / tap flash on the menu buttons */
 .nav__burger, .menu__close { outline: none; -webkit-tap-highlight-color: transparent; }
 .nav__burger:focus, .menu__close:focus { outline: none; box-shadow: none; }
+
+/* =====================================================================
+   TESTIMONIALS — 4 cards, auto-scrolling and user-scrollable (all sizes)
+   The red line is replaced by the person's photo (initials until a photo is added)
+   ===================================================================== */
+.reco__row {
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: none !important;
+  scrollbar-width: none;
+  cursor: grab;
+  outline: none;
+}
+.reco__row::-webkit-scrollbar { display: none; }
+.reco__row.is-dragging { cursor: grabbing; user-select: none; }
+.reco__row.is-dragging a { pointer-events: none; }
+.quote { width: 790px; flex-shrink: 0; justify-content: space-between; }
+.quote__by { align-items: center; gap: 20px; }
+.quote__avatar {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.quote__avatar::before {          /* initials, visible until the photo loads */
+  content: attr(data-initials);
+  font-family: var(--anton);
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.quote__avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.quote__who { display: flex; align-items: center; gap: 20px; flex: 1 1 auto; min-width: 0; }
+.quote__name { color: var(--white); white-space: nowrap; transition: color .2s; }
+.quote__name:hover { color: var(--red); }
+.quote__role { flex: 0 1 auto; text-align: left; text-indent: 0; padding: 0; }
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .quote { width: min(620px, 78vw); }
+  .quote__who { flex-wrap: wrap; row-gap: 6px; }
+}
+@media (max-width: 767px) {
+  .reco__row { padding: 0 16px; }
+  .quote { width: 336px !important; height: auto; min-height: 390px; }
+  .quote__by { flex-direction: row; align-items: center; gap: 14px; margin-top: 28px; }
+  .quote__avatar { width: 40px; height: 40px; }
+  .quote__avatar::before { font-size: 15px; }
+  .quote__who { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .quote__name { margin-top: 0; }
+  .quote__role { margin-top: 0; line-height: 1.5; white-space: normal; }
+}

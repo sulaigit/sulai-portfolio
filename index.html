@@ -290,27 +290,59 @@
           <div class="reco__spacer"></div>
         </div>
 
-        <div class="reco__row">
-          <figure class="quote quote--1" style="width:830px">
+        <!-- Testimonials: auto-scrolling, also swipe / drag / trackpad scrollable (carousel script below) -->
+        <div class="reco__row" tabindex="0" aria-label="Testimonials">
+          <figure class="quote">
             <div class="quote__top">
               <img class="quote__mark" src="assets/quote.svg" alt="">
-              <blockquote class="quote__text">Mohammed takes real ownership of his work and always looks beyond the UI. He understands the bigger picture, cares about the details, and pushes the team to create better products.</blockquote>
+              <blockquote class="quote__text">He’s good at looking beyond the UI, understanding the real problem, and connecting user needs with business goals to create meaningful solutions.</blockquote>
             </div>
-            <figcaption class="quote__by"><span class="quote__line"><img src="assets/quote-line.svg" alt=""></span><span class="quote__name">JORGE FONSECA</span><span class="quote__role"><span class="dash">- </span>FOUNDER • MUTURA GROUP LLC.</span></figcaption>
+            <figcaption class="quote__by">
+              <a class="quote__avatar" href="https://www.linkedin.com/in/thoufiq-ahmed-49090a77/" target="_blank" rel="noopener" data-initials="TA"><img src="assets/people/thoufiq-ahmed.jpg" alt="Thoufiq Ahmed" loading="lazy"></a>
+              <span class="quote__who">
+                <a class="quote__name" href="https://www.linkedin.com/in/thoufiq-ahmed-49090a77/" target="_blank" rel="noopener">THOUFIQ AHMED</a>
+                <span class="quote__role"><span class="dash">- </span>CEO • DIGITAL TECHWORKS</span>
+              </span>
+            </figcaption>
           </figure>
-          <figure class="quote quote--2" style="width:790px">
+          <figure class="quote">
             <div class="quote__top">
               <img class="quote__mark" src="assets/quote.svg" alt="">
-              <blockquote class="quote__text">Sulaiman is someone you can always count on. He brings great ideas to the table, listens to different perspectives, and makes working together genuinely enjoyable.</blockquote>
+              <blockquote class="quote__text">Sulaiman is someone who brings clarity and ownership to the team, shares thoughtful feedback, and always pushes everyone to deliver their best work.</blockquote>
             </div>
-            <figcaption class="quote__by"><span class="quote__line"><img src="assets/quote-line.svg" alt=""></span><span class="quote__name">MATHURAM NALLATHAMBI</span><span class="quote__role"><span class="dash">- </span>FOUNDER • AMBIAN STRATERGY.</span></figcaption>
+            <figcaption class="quote__by">
+              <a class="quote__avatar" href="https://www.linkedin.com/in/mathuram-nallathambi/" target="_blank" rel="noopener" data-initials="MN"><img src="assets/people/mathuram-nallathambi.jpg" alt="Mathuram Nallathambi" loading="lazy"></a>
+              <span class="quote__who">
+                <a class="quote__name" href="https://www.linkedin.com/in/mathuram-nallathambi/" target="_blank" rel="noopener">MATHURAM NALLATHAMBI</a>
+                <span class="quote__role"><span class="dash">- </span>CO-FOUNDER &amp; CEO • AMBIAN STRATERGY</span>
+              </span>
+            </figcaption>
           </figure>
-          <figure class="quote quote--3" style="width:800px">
+          <figure class="quote">
             <div class="quote__top">
               <img class="quote__mark" src="assets/quote.svg" alt="">
-              <blockquote class="quote__text">What I appreciate most about Sulaiman is how he brings people together, encourages open discussions, and helps the team find the right solutions without making things complicated.</blockquote>
+              <blockquote class="quote__text">Working with him is always easy. He listens to different perspectives, works closely with teams, and finds solutions that work for everyone.</blockquote>
             </div>
-            <figcaption class="quote__by"><span class="quote__line"><img src="assets/quote-line.svg" alt=""></span><span class="quote__name">JORGE FONSECA</span><span class="quote__role"><span class="dash">- </span>FOUNDER • MUTURA GROUP LLC.</span></figcaption>
+            <figcaption class="quote__by">
+              <a class="quote__avatar" href="https://www.linkedin.com/in/vignesha1207/" target="_blank" rel="noopener" data-initials="V"><img src="assets/people/vigneshwaran.jpg" alt="Vigneshwaran" loading="lazy"></a>
+              <span class="quote__who">
+                <a class="quote__name" href="https://www.linkedin.com/in/vignesha1207/" target="_blank" rel="noopener">VIGNESHWARAN</a>
+                <span class="quote__role"><span class="dash">- </span>UX LEAD • OPTISOL BUSINESS SOLUTIONS</span>
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="quote">
+            <div class="quote__top">
+              <img class="quote__mark" src="assets/quote.svg" alt="">
+              <blockquote class="quote__text">He takes ownership from the first idea to the final launch, always thinking about the bigger picture and how to make the product better.</blockquote>
+            </div>
+            <figcaption class="quote__by">
+              <a class="quote__avatar" href="https://www.linkedin.com/in/ashokthariyan/" target="_blank" rel="noopener" data-initials="A"><img src="assets/people/ashok.jpg" alt="Ashok" loading="lazy"></a>
+              <span class="quote__who">
+                <a class="quote__name" href="https://www.linkedin.com/in/ashokthariyan/" target="_blank" rel="noopener">ASHOK</a>
+                <span class="quote__role"><span class="dash">- </span>VP, HEAD OF DESIGN &amp; PRODUCT • AIRLEARN - UNACADEMY</span>
+              </span>
+            </figcaption>
           </figure>
         </div>
       </div>
@@ -375,6 +407,88 @@
     menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setMenu(false); }); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
     mobile.addEventListener('change', function (e) { if (!e.matches) setMenu(false); });
+  })();
+</script>
+<script>
+  // Testimonials carousel: endless auto-scroll that the visitor can also drag, swipe or scroll.
+  (function () {
+    var row = document.querySelector('.reco__row');
+    if (!row) return;
+    var page = document.querySelector('.page');
+    function hideBrokenPhotos(scope) {
+      scope.querySelectorAll('.quote__avatar img').forEach(function (img) {
+        function bad() { img.style.display = 'none'; }      // keep the initials when there is no photo yet
+        img.addEventListener('error', bad);
+        if (img.complete && !img.naturalWidth) bad();
+      });
+    }
+    var originals = Array.prototype.slice.call(row.children);
+    originals.forEach(function (q) {                       // one copy of the set makes the loop seamless
+      var c = q.cloneNode(true);
+      c.setAttribute('aria-hidden', 'true');
+      c.classList.add('is-clone');
+      c.querySelectorAll('a').forEach(function (a) { a.tabIndex = -1; });
+      row.appendChild(c);
+    });
+    hideBrokenPhotos(row);
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var SPEED = 45;                                        // px per second
+    var paused = false, inView = false, resumeTimer = null, pos = 0, last = performance.now();
+    function setWidth() { return row.children[originals.length].offsetLeft - row.children[0].offsetLeft; }
+    function wrap() {
+      var w = setWidth();
+      if (row.scrollLeft >= w) row.scrollLeft -= w;
+      else if (row.scrollLeft <= 0) row.scrollLeft += w;
+    }
+    function pause() { paused = true; clearTimeout(resumeTimer); }
+    function resumeSoon(ms) {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(function () { paused = false; pos = row.scrollLeft; }, ms);
+    }
+    (function tick(now) {
+      var dt = Math.min(64, now - last); last = now;
+      if (!paused && inView && !reduce && !document.hidden) {
+        pos += SPEED * dt / 1000;
+        var w = setWidth();
+        if (pos >= w) pos -= w;
+        row.scrollLeft = pos;
+      }
+      requestAnimationFrame(tick);
+    })(last);
+    row.addEventListener('scroll', function () { if (paused) wrap(); }, { passive: true });
+    new IntersectionObserver(function (e) { inView = e[0].isIntersecting; }).observe(row);
+
+    // Hover / touch / wheel / keyboard pause it; it carries on a moment after
+    row.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') pause(); });
+    row.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') resumeSoon(600); });
+    row.addEventListener('touchstart', pause, { passive: true });
+    row.addEventListener('touchend', function () { resumeSoon(2500); }, { passive: true });
+    row.addEventListener('wheel', function () { pause(); resumeSoon(2500); }, { passive: true });
+    row.addEventListener('focusin', pause);
+    row.addEventListener('focusout', function () { resumeSoon(1200); });
+
+    // Mouse drag to scroll (a drag never triggers the links inside)
+    var drag = null;
+    row.addEventListener('pointerdown', function (e) {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      drag = { x: e.clientX, left: row.scrollLeft, moved: false };
+      pause();
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var dx = (e.clientX - drag.x) / (parseFloat(page.style.zoom) || 1);
+      if (Math.abs(dx) > 4) { drag.moved = true; row.classList.add('is-dragging'); }
+      row.scrollLeft = drag.left - dx;
+      wrap();
+    });
+    window.addEventListener('pointerup', function () {
+      if (!drag) return;
+      var moved = drag.moved; drag = null;
+      setTimeout(function () { row.classList.remove('is-dragging'); }, 0);
+      if (moved) row.addEventListener('click', function stop(ev) { ev.preventDefault(); ev.stopPropagation(); row.removeEventListener('click', stop, true); }, true);
+      if (!row.matches(':hover')) resumeSoon(1500);
+    });
   })();
 </script>
 <script src="motion.js"></script>
