@@ -323,13 +323,12 @@
   }
 
   // The visitor's tap opens the site AND unlocks audio, so the hero stack always has sound.
-  var intro = $('.intro'), itap = $('.intro__tap');
+  var intro = $(".intro"), itap = null;
   var entered = false, onEnter = null;
   function enter() { if (entered) return; entered = true; if (onEnter) onEnter(); }
   intro.addEventListener('click', enter);
   intro.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); } });
   var waitForEnter = function () { return entered ? Promise.resolve() : new Promise(function (r) { onEnter = r; }); };
-  if (itap && window.matchMedia('(hover: hover) and (pointer: fine)').matches) itap.textContent = 'CLICK TO ENTER';
 
   async function runIntro() {
     var fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
@@ -346,16 +345,10 @@
       await Promise.race([wait(1150), waitForEnter()]);
       await fontsReady;
       if (!entered) {
-        // gentle breathing star + pulsing prompt until the visitor taps
-        var breathe = istar.animate([
+        // one slow breath, then the star opens the site on its own (a click skips ahead)
+        await Promise.race([istar.animate([
           { transform: 'scale(1)' }, { transform: 'scale(1.08)', offset: 0.5 }, { transform: 'scale(1)' }
-        ], { duration: 1800, easing: 'ease-in-out', iterations: Infinity });
-        itap.animate([{ opacity: 0, translate: '-50% 6px' }, { opacity: 1, translate: '-50% 0' }],
-          { duration: 700, easing: EASE_OUT, fill: 'forwards' });
-        var pulse = itap.animate([{ opacity: 1 }, { opacity: 0.35 }, { opacity: 1 }],
-          { duration: 1800, delay: 700, easing: 'ease-in-out', iterations: Infinity });
-        await waitForEnter();
-        breathe.cancel(); pulse.cancel();
+        ], { duration: 700, easing: 'ease-in-out' }).finished, waitForEnter()]);
       }
     } else {
       await fontsReady;

@@ -85,20 +85,4 @@ html.motion .menu:not([hidden]) .menu__link:nth-of-type(2) { animation-delay: .1
 html.motion .menu:not([hidden]) .menu__link:nth-of-type(3) { animation-delay: .24s; }
 html.motion .menu:not([hidden]) .menu__cta { animation: menu-in .6s ease .35s both; }
 
-/* "Tap / click to enter" prompt under the intro star */
-.intro__tap {
-  position: absolute;
-  left: 50%;
-  top: calc(50% + 118px);
-  translate: -50% 0;
-  font-family: var(--manrope);
-  font-weight: 500;
-  font-size: 11px;
-  letter-spacing: 4px;
-  text-indent: 4px;
-  color: #dc0016;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-}
 html.motion .intro { outline: none; -webkit-tap-highlight-color: transparent; }
