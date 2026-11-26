@@ -8,8 +8,33 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Host+Grotesk:wght@500&family=Manrope:wght@400;500;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="motion.css">
+<script>
+  // Turn on the motion layer before first paint (skipped for "reduce motion" users).
+  // Safety net: if motion.js never runs, show the static site after 7s.
+  (function () {
+    var r = document.documentElement;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('animate' in r)) return;
+    r.classList.add('motion', 'intro-running');
+    setTimeout(function () { if (!r.classList.contains('intro-done')) r.classList.remove('motion', 'intro-running'); }, 7000);
+  })();
+</script>
 </head>
 <body>
+<!-- Opening: the star appears, spins and opens the site (motion.js) -->
+<div class="intro" aria-hidden="true">
+  <div class="intro__veil"></div>
+  <div class="intro__star"><img src="assets/star.svg" alt=""></div>
+  <div class="intro__word">SULAI</div>
+</div>
+<!-- Star particles + scroll guide star (motion.js) -->
+<canvas class="stars-canvas" aria-hidden="true"></canvas>
+<div class="guide" aria-hidden="true">
+  <div class="guide__track"></div>
+  <div class="guide__fill"></div>
+  <div class="guide__star"><img src="assets/star.svg" alt=""></div>
+</div>
+
 <div class="page">
 
   <!-- ============ HERO (desktop 238:39938 · mobile 251:40292) ============ -->
@@ -364,5 +389,6 @@
     mobile.addEventListener('change', function (e) { if (!e.matches) setMenu(false); });
   })();
 </script>
+<script src="motion.js"></script>
 </body>
 </html>
