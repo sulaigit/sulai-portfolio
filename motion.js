@@ -24,6 +24,58 @@
   var EASE_FALL = 'cubic-bezier(.55,0,.85,.35)';           // accelerate like gravity
 
   /* ---------------------------------------------------------------
+     SOUND: synthesised block landings (Web Audio, no files).
+     Browsers only allow sound after the visitor clicks/taps/presses a key,
+     so the audio engine starts on the first such interaction.
+     --------------------------------------------------------------- */
+  var Sfx = (function () {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = null, master = null, noise = null;
+    function init() {
+      if (ctx || !AC) return;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0.55; master.connect(ctx.destination);
+      noise = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
+      var d = noise.getChannelData(0);
+      for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+    }
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+      window.addEventListener(ev, function () { init(); if (ctx && ctx.state === 'suspended') ctx.resume(); }, { passive: true, capture: true });
+    });
+    // weight 0..1: heavier = lower, louder thud
+    function land(weight) {
+      if (!ctx || ctx.state !== 'running') return;
+      var t = ctx.currentTime, w = weight == null ? 0.7 : weight, v = 0.85 + Math.random() * 0.3;
+      // 1. body thud: a sine pitch-dropping like a heavy block hitting the floor
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime((95 + 40 * (1 - w)) * v, t);
+      o.frequency.exponentialRampToValueAtTime((42 + 20 * (1 - w)) * v, t + 0.16);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.9 * (0.5 + w * 0.5), t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.3);
+      // 2. wooden knock: short band-passed noise burst
+      var n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
+      n.buffer = noise;
+      bp.type = 'bandpass'; bp.frequency.value = (900 + 900 * (1 - w)) * v; bp.Q.value = 1.4;
+      ng.gain.setValueAtTime(0.5 * (0.6 + 0.4 * (1 - w)), t);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      n.connect(bp); bp.connect(ng); ng.connect(master); n.start(t); n.stop(t + 0.1);
+      // 3. settle: the small bounce taps again, softer
+      var o2 = ctx.createOscillator(), g2 = ctx.createGain(), t2 = t + 0.19;
+      o2.type = 'triangle';
+      o2.frequency.setValueAtTime((180 + 60 * (1 - w)) * v, t2);
+      o2.frequency.exponentialRampToValueAtTime(90 * v, t2 + 0.06);
+      g2.gain.setValueAtTime(0.0001, t2);
+      g2.gain.exponentialRampToValueAtTime(0.18, t2 + 0.005);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.09);
+      o2.connect(g2); g2.connect(master); o2.start(t2); o2.stop(t2 + 0.12);
+    }
+    return { land: land, at: function (ms, weight) { setTimeout(function () { land(weight); }, ms); } };
+  })();
+
+  /* ---------------------------------------------------------------
      Building blocks
      --------------------------------------------------------------- */
   function done(el, anim) {
@@ -37,9 +89,10 @@
   }
 
   // Falls `dist` px, lands with a small squash and one soft bounce.
-  function drop(el, delay, dist) {
+  function drop(el, delay, dist, weight) {
     if (!el) return;
     el.classList.add('m-drop');
+    Sfx.at(delay + 1150 * 0.56, weight);                      // thud exactly on impact
     done(el, el.animate([
       { translate: '0 ' + (-dist) + 'px', scale: '0.97 1.06', opacity: 0, easing: EASE_FALL },
       { opacity: 1, offset: 0.18, easing: EASE_FALL },
@@ -51,17 +104,17 @@
   }
 
   // Hero: start fully above the top of the screen
-  function dropFromTop(el, delay) {
+  function dropFromTop(el, delay, weight) {
     if (!el) return;
     var r = el.getBoundingClientRect();
-    drop(el, delay, Math.max(260, (r.bottom + 80) / zoom() * 1.15));
+    drop(el, delay, Math.max(260, (r.bottom + 80) / zoom() * 1.15), weight);
   }
 
   // Contact: start tucked behind the bottom edge of the testimonial cards and fall out from under them
-  function dropFromSection(el, delay) {
+  function dropFromSection(el, delay, weight) {
     if (!el) return;
     var r = el.getBoundingClientRect(), q = $('.reco__row .quote').getBoundingClientRect();
-    drop(el, delay, Math.max(80, (r.bottom - q.bottom + 8) / zoom()));
+    drop(el, delay, Math.max(80, (r.bottom - q.bottom + 8) / zoom()), weight);
   }
 
   function pop(el, delay) {
@@ -147,7 +200,8 @@
     var words = mob ? heroMob : heroDesk;
     (mob ? heroDesk.concat([heroIcons[0]]) : heroMob.concat([heroIcons[1]])).forEach(function (el) { if (el) el.classList.add('is-in'); });
     var t = 200;
-    words.forEach(function (el, i) { dropFromTop(el, t); t += i < 2 ? 320 : 260; });
+    words.forEach(function (el, i) { dropFromTop(el, t, [1, 0.85, 0.65, 0.35][i]); t += i < 2 ? 320 : 260; });
+    Sfx.at(t + 360 + 250, 0.2);                                // app icon pops in
     pop(mob ? heroIcons[1] : heroIcons[0], t + 360);
   }
 
@@ -161,7 +215,7 @@
     (mob ? $('.contact__watermark-rot') : $('.contact-m__wm')).classList.add('is-in');
     fade(mob ? $('.contact-m__wm') : $('.contact__watermark-rot'), 0, 1600);
     var t = 150;
-    (mob ? contactMob : contactDesk).forEach(function (el, i) { dropFromSection(el, t); t += i < 1 ? 320 : 280; });
+    (mob ? contactMob : contactDesk).forEach(function (el, i) { dropFromSection(el, t, [1, 0.85, 0.65][i]); t += i < 1 ? 320 : 280; });
     rise(mob ? contactEmail[1] : contactEmail[0], t + 450, { y: 24, dur: 900 });
   });
 
@@ -176,6 +230,8 @@
       rise(meta, 0, { x: -24, y: 0, dur: 900 });
       rise($('.sec-head__white', title), 80, { y: 70, dur: 1100 });
       rise($('.sec-head__red', title), 380, { y: -90, dur: 1150, ease: 'cubic-bezier(.3,1.3,.5,1)' });
+      Sfx.at(80 + 420, 0.75);                                    // white word settles
+      Sfx.at(380 + 430, 0.5);                                    // red word stacks on top
       fade($('.star', title), 900, 900);
     });
   });
