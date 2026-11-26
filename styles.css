@@ -322,13 +322,13 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
 .card__media {
   position: relative;
   width: 556px;
-  height: 435px;
+  height: 300px;
   flex-shrink: 0;
   box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.25);
 }
 .card__crop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .card__crop img { position: absolute; }
-.card__full { position: absolute; inset: 0; width: 100%; height: 100%; object-position: bottom; pointer-events: none; }
+.card__full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: bottom; pointer-events: none; }
 .card__cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
 .card__body { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 50px; }
@@ -364,10 +364,10 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   letter-spacing: 4.2px;
   white-space: nowrap;
 }
-/* Stamp lives inside .card__media; % values = Figma px / 556×435 media box */
+/* Stamp lives inside .card__media; % values = Figma px / 556×300 media box (it overhangs the bottom, as in Figma) */
 .stamp {
   position: absolute;
-  width: 65.825%;          /* 365.985 / 556 */
+  width: 50.193%;          /* 279.072 / 556 */
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -589,7 +589,7 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
   .works__row { gap: 24px; }
   .card { padding: 28px; }
   .card__inner.gap-40, .card__inner.gap-34 { gap: 28px; }
-  .card__media { width: 100%; height: auto; aspect-ratio: 556 / 435; }
+  .card__media { width: 100%; height: auto; aspect-ratio: 556 / 300; }
   .card__body { gap: 32px; width: 100%; }
   .card__text { gap: 16px; }
   .card__title { font-size: clamp(34px, 4.6vw, 66px); white-space: normal; }
@@ -712,4 +712,9 @@ a.card:hover { border-color: rgba(255, 255, 255, 0.35); }
     border-top-width: 1px;
   }
   .footer__link > span:first-child { font-size: 12px; letter-spacing: 2.4px; margin-right: -2.4px; }
+}
+
+/* Figma (frame 238:39937): last experience row is 160 tall = 40 top padding + 120 text, no bottom padding or rule */
+@media (min-width: 1200px) {
+  .job:last-child { padding-bottom: 0; box-shadow: none; }
 }
